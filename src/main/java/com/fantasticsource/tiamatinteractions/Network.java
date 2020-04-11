@@ -1,10 +1,8 @@
 package com.fantasticsource.tiamatinteractions;
 
-import com.fantasticsource.mctools.MCTools;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraftforge.fml.common.network.ByteBufUtils;
+import net.minecraft.world.GameType;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
@@ -12,7 +10,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 import static com.fantasticsource.tiamatinteractions.TiamatInteractions.MODID;
 
@@ -29,42 +27,23 @@ public class Network
 
     public static class SyncConfigPacket implements IMessage
     {
-        public boolean op;
-        public boolean blockListIsWhitelist;
-        public ArrayList<String> blockList;
-
-        public SyncConfigPacket()
-        {
-            //Required
-        }
-
-        public SyncConfigPacket(EntityPlayerMP player)
-        {
-            op = MCTools.isOP(player);
-        }
+        public LinkedHashMap<GameType, CInteractionData> data = new LinkedHashMap<>();
 
         @Override
         public void toBytes(ByteBuf buf)
         {
-            buf.writeBoolean(op);
-
-            buf.writeBoolean(TiamatInteractionsConfig.blockListIsWhitelist);
-
-            buf.writeInt(TiamatInteractionsConfig.blockList.length);
-            for (String block : TiamatInteractionsConfig.blockList) ByteBufUtils.writeUTF8String(buf, block);
+            buf.writeInt(CInteractionData.data.size());
+            for (CInteractionData data : CInteractionData.data.values()) data.write(buf);
         }
 
         @Override
         public void fromBytes(ByteBuf buf)
         {
-            op = buf.readBoolean();
-
-            blockListIsWhitelist = buf.readBoolean();
-
-            blockList = new ArrayList<>();
+            CInteractionData data;
             for (int i = buf.readInt(); i > 0; i--)
             {
-                blockList.add(ByteBufUtils.readUTF8String(buf));
+                data = new CInteractionData().read(buf);
+                this.data.put(data.gameType, data);
             }
         }
     }
@@ -75,12 +54,7 @@ public class Network
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(SyncConfigPacket packet, MessageContext ctx)
         {
-            Minecraft.getMinecraft().addScheduledTask(() ->
-            {
-                TiamatInteractionsData.weAreOP = packet.op;
-                TiamatInteractionsData.blockListIsWhitelist = packet.blockListIsWhitelist;
-                TiamatInteractionsData.blockList = packet.blockList;
-            });
+            Minecraft.getMinecraft().addScheduledTask(() -> CInteractionData.data = packet.data);
             return null;
         }
     }

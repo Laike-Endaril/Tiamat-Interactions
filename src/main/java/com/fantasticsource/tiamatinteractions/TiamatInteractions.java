@@ -1,8 +1,10 @@
 package com.fantasticsource.tiamatinteractions;
 
-import com.fantasticsource.mctools.MCTools;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.world.GameType;
+import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
@@ -38,20 +40,20 @@ public class TiamatInteractions
     public static void playerLogin(PlayerEvent.PlayerLoggedInEvent event)
     {
         EntityPlayerMP player = (EntityPlayerMP) event.player;
-        Network.WRAPPER.sendTo(new Network.SyncConfigPacket(player), player);
+        Network.WRAPPER.sendTo(new Network.SyncConfigPacket(), player);
     }
 
     @SubscribeEvent
     public static void rightClickBlock(PlayerInteractEvent.RightClickBlock event)
     {
-        if (event.getEntityPlayer() instanceof EntityPlayerMP)
-        {
-            if (MCTools.isOP((EntityPlayerMP) event.getEntityPlayer())) return;
-        }
-        else if (TiamatInteractionsData.weAreOP) return;
+        World world = event.getWorld();
+        GameType gameType = world.isRemote ? Minecraft.getMinecraft().playerController.getCurrentGameType() : ((EntityPlayerMP) event.getEntityPlayer()).interactionManager.getGameType();
+
+        CInteractionData data = CInteractionData.data.get(gameType);
+        if (data == null) return;
 
         IBlockState blockState = event.getWorld().getBlockState(event.getPos());
-        if (TiamatInteractionsData.blockListIsWhitelist != TiamatInteractionsData.blockList.contains(blockState.getBlock().getRegistryName().toString()))
+        if (data.blockListIsWhitelist != data.blockList.contains(blockState.getBlock().getRegistryName().toString()))
         {
             event.setUseBlock(Event.Result.DENY);
         }
