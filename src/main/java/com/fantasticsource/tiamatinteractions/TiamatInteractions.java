@@ -63,10 +63,16 @@ public class TiamatInteractions
     }
 
     @SubscribeEvent
-    public static void interact(PlayerInteractEvent.EntityInteractSpecific event)
+    public static void entityInteract(PlayerInteractEvent.EntityInteractSpecific event)
     {
         if (event.getSide() != Side.CLIENT || event.getHand() != EnumHand.MAIN_HAND || event.getEntityPlayer().dimension != 0) return;
 
         new InteractionGUI(event.getTarget());
+    }
+
+    @SubscribeEvent
+    public static void blockInteract(PlayerInteractEvent.RightClickBlock event)
+    {
+
     }
 }
