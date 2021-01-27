@@ -1,8 +1,10 @@
 package com.fantasticsource.tiamatinteractions;
 
+import com.fantasticsource.tiamatinteractions.interaction.InteractionGUI;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.EnumHand;
 import net.minecraft.world.GameType;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
@@ -15,8 +17,9 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import net.minecraftforge.fml.relauncher.Side;
 
-@Mod(modid = TiamatInteractions.MODID, name = TiamatInteractions.NAME, version = TiamatInteractions.VERSION, dependencies = "required-after:fantasticlib@[1.12.2.034b,)")
+@Mod(modid = TiamatInteractions.MODID, name = TiamatInteractions.NAME, version = TiamatInteractions.VERSION, dependencies = "required-after:fantasticlib@[1.12.2.044r,)")
 public class TiamatInteractions
 {
     public static final String MODID = "tiamatinteractions";
@@ -57,5 +60,13 @@ public class TiamatInteractions
         {
             event.setUseBlock(Event.Result.DENY);
         }
+    }
+
+    @SubscribeEvent
+    public static void interact(PlayerInteractEvent.EntityInteractSpecific event)
+    {
+        if (event.getSide() != Side.CLIENT || event.getHand() != EnumHand.MAIN_HAND || event.getEntityPlayer().dimension != 0) return;
+
+        new InteractionGUI(event.getTarget());
     }
 }

@@ -1,8 +1,14 @@
 package com.fantasticsource.tiamatinteractions;
 
+import com.fantasticsource.mctools.PlayerData;
+import com.fantasticsource.tiamatinteractions.interaction.trading.TradeGUI;
+import com.fantasticsource.tiamatinteractions.interaction.trading.Trading;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.world.GameType;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
@@ -22,6 +28,11 @@ public class Network
     public static void init()
     {
         WRAPPER.registerMessage(SyncConfigPacketHandler.class, SyncConfigPacket.class, discriminator++, Side.CLIENT);
+        WRAPPER.registerMessage(RequestTradePacketHandler.class, RequestTradePacket.class, discriminator++, Side.SERVER);
+        WRAPPER.registerMessage(LockTradePacketHandler.class, LockTradePacket.class, discriminator++, Side.SERVER);
+        WRAPPER.registerMessage(CompleteTradePacketHandler.class, ReadyTradePacket.class, discriminator++, Side.SERVER);
+        WRAPPER.registerMessage(TradePacketHandler.class, TradePacket.class, discriminator++, Side.CLIENT);
+        WRAPPER.registerMessage(UpdateTradePacketHandler.class, UpdateTradePacket.class, discriminator++, Side.CLIENT);
     }
 
 
@@ -55,6 +66,216 @@ public class Network
         public IMessage onMessage(SyncConfigPacket packet, MessageContext ctx)
         {
             Minecraft.getMinecraft().addScheduledTask(() -> CInteractionData.data = packet.data);
+            return null;
+        }
+    }
+
+
+    public static class RequestTradePacket implements IMessage
+    {
+        String playerName;
+
+        public RequestTradePacket()
+        {
+            //Required
+        }
+
+        public RequestTradePacket(String playerName)
+        {
+            this.playerName = playerName;
+        }
+
+        @Override
+        public void toBytes(ByteBuf buf)
+        {
+            ByteBufUtils.writeUTF8String(buf, playerName);
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf)
+        {
+            playerName = ByteBufUtils.readUTF8String(buf);
+        }
+    }
+
+    public static class RequestTradePacketHandler implements IMessageHandler<RequestTradePacket, IMessage>
+    {
+        @Override
+        public IMessage onMessage(RequestTradePacket packet, MessageContext ctx)
+        {
+            FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() -> Trading.tryStart(ctx.getServerHandler().player, (EntityPlayerMP) PlayerData.getEntity(packet.playerName)));
+            return null;
+        }
+    }
+
+
+    public static class LockTradePacket implements IMessage
+    {
+        public boolean lock;
+
+        public LockTradePacket()
+        {
+            //Required
+        }
+
+        public LockTradePacket(boolean lock)
+        {
+            this.lock = lock;
+        }
+
+        @Override
+        public void toBytes(ByteBuf buf)
+        {
+            buf.writeBoolean(lock);
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf)
+        {
+            lock = buf.readBoolean();
+        }
+    }
+
+    public static class LockTradePacketHandler implements IMessageHandler<LockTradePacket, IMessage>
+    {
+        @Override
+        public IMessage onMessage(LockTradePacket packet, MessageContext ctx)
+        {
+            FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() -> Trading.tryLock(ctx.getServerHandler().player, packet.lock));
+            return null;
+        }
+    }
+
+
+    public static class ReadyTradePacket implements IMessage
+    {
+        public boolean ready;
+
+        public ReadyTradePacket()
+        {
+            //Required
+        }
+
+        public ReadyTradePacket(boolean ready)
+        {
+            this.ready = ready;
+        }
+
+        @Override
+        public void toBytes(ByteBuf buf)
+        {
+            buf.writeBoolean(ready);
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf)
+        {
+            ready = buf.readBoolean();
+        }
+    }
+
+    public static class CompleteTradePacketHandler implements IMessageHandler<ReadyTradePacket, IMessage>
+    {
+        @Override
+        public IMessage onMessage(ReadyTradePacket packet, MessageContext ctx)
+        {
+            FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() -> Trading.tryReady(ctx.getServerHandler().player, packet.ready));
+            return null;
+        }
+    }
+
+
+    public static class TradePacket implements IMessage
+    {
+        public TradePacket() //Required; probably for when the packet is received
+        {
+        }
+
+
+        @Override
+        public void toBytes(ByteBuf buf)
+        {
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf)
+        {
+        }
+    }
+
+    public static class TradePacketHandler implements IMessageHandler<TradePacket, IMessage>
+    {
+        @Override
+        public IMessage onMessage(TradePacket packet, MessageContext ctx)
+        {
+            if (ctx.side == Side.CLIENT)
+            {
+                Minecraft mc = Minecraft.getMinecraft();
+                mc.addScheduledTask(ClientProxy::showTradeGUI);
+            }
+
+            return null;
+        }
+    }
+
+
+    public static class UpdateTradePacket implements IMessage
+    {
+        boolean locked, ready, otherLocked, otherReady;
+
+        public UpdateTradePacket() //Required; probably for when the packet is received
+        {
+        }
+
+        public UpdateTradePacket(boolean locked, boolean ready, boolean otherLocked, boolean otherReady)
+        {
+            this.locked = locked;
+            this.ready = ready;
+            this.otherLocked = otherLocked;
+            this.otherReady = otherReady;
+        }
+
+
+        @Override
+        public void toBytes(ByteBuf buf)
+        {
+            buf.writeBoolean(locked);
+            buf.writeBoolean(ready);
+            buf.writeBoolean(otherLocked);
+            buf.writeBoolean(otherReady);
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf)
+        {
+            locked = buf.readBoolean();
+            ready = buf.readBoolean();
+            otherLocked = buf.readBoolean();
+            otherReady = buf.readBoolean();
+        }
+    }
+
+    public static class UpdateTradePacketHandler implements IMessageHandler<UpdateTradePacket, IMessage>
+    {
+        @Override
+        public IMessage onMessage(UpdateTradePacket packet, MessageContext ctx)
+        {
+            if (ctx.side == Side.CLIENT)
+            {
+                Minecraft mc = Minecraft.getMinecraft();
+                mc.addScheduledTask(() ->
+                {
+                    if (mc.currentScreen instanceof TradeGUI)
+                    {
+                        TradeGUI gui = (TradeGUI) mc.currentScreen;
+                        gui.locked = packet.locked;
+                        gui.ready = packet.ready;
+                        gui.otherLocked = packet.otherLocked;
+                        gui.otherReady = packet.otherReady;
+                    }
+                });
+            }
+
             return null;
         }
     }
