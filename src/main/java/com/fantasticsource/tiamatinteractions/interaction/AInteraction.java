@@ -7,12 +7,8 @@ import java.util.HashMap;
 
 public abstract class AInteraction
 {
+    public static boolean doDefault = false;
     public static final HashMap<String, AInteraction> INTERACTIONS = new HashMap<>();
-
-    static
-    {
-        new
-    }
 
     public final String name;
 
@@ -24,29 +20,58 @@ public abstract class AInteraction
         INTERACTIONS.put(name, this);
     }
 
-    public boolean available(PlayerInteractEvent.EntityInteractSpecific event)
-    {
-        return false;
-    }
+    public abstract boolean available(PlayerInteractEvent.EntityInteractSpecific event);
 
-    public boolean available(PlayerInteractEvent.RightClickBlock event)
-    {
-        return false;
-    }
+    public abstract boolean available(PlayerInteractEvent.RightClickBlock event);
 
     /**
      * @return Whether we're done (true) or should return to the interaction menu (false)
      */
-    public boolean execute(PlayerInteractEvent.EntityInteractSpecific event)
-    {
-        return false;
-    }
+    public abstract boolean execute(PlayerInteractEvent.EntityInteractSpecific event);
 
     /**
      * @return Whether we're done (true) or should return to the interaction menu (false)
      */
-    public boolean execute(PlayerInteractEvent.RightClickBlock event)
+    public abstract boolean execute(PlayerInteractEvent.RightClickBlock event);
+
+
+    public static class DefaultInteraction extends AInteraction
     {
-        return false;
+        public DefaultInteraction()
+        {
+            super("Interact");
+        }
+
+        @Override
+        public boolean available(PlayerInteractEvent.EntityInteractSpecific event)
+        {
+            return true;
+        }
+
+        @Override
+        public boolean available(PlayerInteractEvent.RightClickBlock event)
+        {
+            return true;
+        }
+
+        @Override
+        public boolean execute(PlayerInteractEvent.EntityInteractSpecific event)
+        {
+            doDefault = true;
+            //TODO
+            doDefault = false;
+
+            return false;
+        }
+
+        @Override
+        public boolean execute(PlayerInteractEvent.RightClickBlock event)
+        {
+            doDefault = true;
+            //TODO
+            doDefault = false;
+
+            return false;
+        }
     }
 }

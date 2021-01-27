@@ -6,6 +6,10 @@ import com.fantasticsource.tiamatinteractions.interaction.trading.Trading;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameType;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
@@ -33,6 +37,7 @@ public class Network
         WRAPPER.registerMessage(CompleteTradePacketHandler.class, ReadyTradePacket.class, discriminator++, Side.SERVER);
         WRAPPER.registerMessage(TradePacketHandler.class, TradePacket.class, discriminator++, Side.CLIENT);
         WRAPPER.registerMessage(UpdateTradePacketHandler.class, UpdateTradePacket.class, discriminator++, Side.CLIENT);
+        WRAPPER.registerMessage(InteractPacketHandler.class, InteractPacket.class, discriminator++, Side.CLIENT);
     }
 
 
@@ -273,6 +278,76 @@ public class Network
                         gui.otherLocked = packet.otherLocked;
                         gui.otherReady = packet.otherReady;
                     }
+                });
+            }
+
+            return null;
+        }
+    }
+
+
+    public static class InteractPacket implements IMessage
+    {
+        BlockPos pos;
+        EnumFacing facing;
+        Vec3d hitVec;
+        EnumHand hand;
+
+        public InteractPacket() //Required; probably for when the packet is received
+        {
+        }
+
+        public InteractPacket(BlockPos pos)
+        {
+            this(pos, EnumFacing.UP, new Vec3d(pos), EnumHand.MAIN_HAND);
+        }
+
+        public InteractPacket(BlockPos pos, EnumFacing facing, Vec3d hitVec, EnumHand hand)
+        {
+            this.pos = pos;
+            this.facing = facing;
+            this.hitVec = hitVec;
+            this.hand = hand;
+        }
+
+
+        @Override
+        public void toBytes(ByteBuf buf)
+        {
+            buf.writeInt(pos.getX());
+            buf.writeInt(pos.getY());
+            buf.writeInt(pos.getZ());
+
+            buf.writeInt(facing.getIndex());
+
+            buf.writeDouble(hitVec.x);
+            buf.writeDouble(hitVec.y);
+            buf.writeDouble(hitVec.z);
+
+            buf.writeInt(hand.ordinal());
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf)
+        {
+            pos = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
+            facing = EnumFacing.getFront(buf.readInt());
+            hitVec = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
+            hand = EnumHand.values()[buf.readInt()];
+        }
+    }
+
+    public static class InteractPacketHandler implements IMessageHandler<InteractPacket, IMessage>
+    {
+        @Override
+        public IMessage onMessage(InteractPacket packet, MessageContext ctx)
+        {
+            if (ctx.side == Side.CLIENT)
+            {
+                Minecraft mc = Minecraft.getMinecraft();
+                mc.addScheduledTask(() ->
+                {
+                    mc.playerController.processRightClickBlock(mc.player, mc.world, packet.pos, packet.facing, packet.hitVec, packet.hand);
                 });
             }
 

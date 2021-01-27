@@ -14,6 +14,7 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
@@ -44,6 +45,12 @@ public class TiamatInteractions
     {
         EntityPlayerMP player = (EntityPlayerMP) event.player;
         Network.WRAPPER.sendTo(new Network.SyncConfigPacket(), player);
+    }
+
+    @Mod.EventHandler
+    public static void serverStarting(FMLServerStartingEvent event)
+    {
+        event.registerServerCommand(new CmdInteract());
     }
 
     @SubscribeEvent

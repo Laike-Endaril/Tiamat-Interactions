@@ -1,0 +1,5 @@
+tiamatinteractions.trade=Trade
+
+
+
+tiamatinteractions.cmd.interact.usage=Make a player interact with a block (x, y, z, [player])
