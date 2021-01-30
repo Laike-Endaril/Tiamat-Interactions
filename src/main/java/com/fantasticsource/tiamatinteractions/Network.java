@@ -1,16 +1,20 @@
 package com.fantasticsource.tiamatinteractions;
 
-import com.fantasticsource.mctools.PlayerData;
+import com.fantasticsource.tiamatinteractions.interaction.AInteraction;
+import com.fantasticsource.tiamatinteractions.interaction.InteractionGUI;
 import com.fantasticsource.tiamatinteractions.interaction.trading.TradeGUI;
 import com.fantasticsource.tiamatinteractions.interaction.trading.Trading;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.GameType;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
@@ -20,6 +24,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
 import static com.fantasticsource.tiamatinteractions.TiamatInteractions.MODID;
@@ -32,12 +37,13 @@ public class Network
     public static void init()
     {
         WRAPPER.registerMessage(SyncConfigPacketHandler.class, SyncConfigPacket.class, discriminator++, Side.CLIENT);
-        WRAPPER.registerMessage(RequestTradePacketHandler.class, RequestTradePacket.class, discriminator++, Side.SERVER);
         WRAPPER.registerMessage(LockTradePacketHandler.class, LockTradePacket.class, discriminator++, Side.SERVER);
-        WRAPPER.registerMessage(CompleteTradePacketHandler.class, ReadyTradePacket.class, discriminator++, Side.SERVER);
+        WRAPPER.registerMessage(ReadyTradePacketHandler.class, ReadyTradePacket.class, discriminator++, Side.SERVER);
         WRAPPER.registerMessage(TradePacketHandler.class, TradePacket.class, discriminator++, Side.CLIENT);
         WRAPPER.registerMessage(UpdateTradePacketHandler.class, UpdateTradePacket.class, discriminator++, Side.CLIENT);
-        WRAPPER.registerMessage(InteractPacketHandler.class, InteractPacket.class, discriminator++, Side.CLIENT);
+        WRAPPER.registerMessage(BlockInteractionPacketHandler.class, BlockInteractionPacket.class, discriminator++, Side.CLIENT);
+        WRAPPER.registerMessage(InteractionMenuPacketHandler.class, InteractionMenuPacket.class, discriminator++, Side.CLIENT);
+        WRAPPER.registerMessage(RequestInteractionPacketHandler.class, RequestInteractionPacket.class, discriminator++, Side.SERVER);
     }
 
 
@@ -71,44 +77,6 @@ public class Network
         public IMessage onMessage(SyncConfigPacket packet, MessageContext ctx)
         {
             Minecraft.getMinecraft().addScheduledTask(() -> CInteractionData.data = packet.data);
-            return null;
-        }
-    }
-
-
-    public static class RequestTradePacket implements IMessage
-    {
-        String playerName;
-
-        public RequestTradePacket()
-        {
-            //Required
-        }
-
-        public RequestTradePacket(String playerName)
-        {
-            this.playerName = playerName;
-        }
-
-        @Override
-        public void toBytes(ByteBuf buf)
-        {
-            ByteBufUtils.writeUTF8String(buf, playerName);
-        }
-
-        @Override
-        public void fromBytes(ByteBuf buf)
-        {
-            playerName = ByteBufUtils.readUTF8String(buf);
-        }
-    }
-
-    public static class RequestTradePacketHandler implements IMessageHandler<RequestTradePacket, IMessage>
-    {
-        @Override
-        public IMessage onMessage(RequestTradePacket packet, MessageContext ctx)
-        {
-            FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() -> Trading.tryStart(ctx.getServerHandler().player, (EntityPlayerMP) PlayerData.getEntity(packet.playerName)));
             return null;
         }
     }
@@ -179,7 +147,7 @@ public class Network
         }
     }
 
-    public static class CompleteTradePacketHandler implements IMessageHandler<ReadyTradePacket, IMessage>
+    public static class ReadyTradePacketHandler implements IMessageHandler<ReadyTradePacket, IMessage>
     {
         @Override
         public IMessage onMessage(ReadyTradePacket packet, MessageContext ctx)
@@ -215,8 +183,7 @@ public class Network
         {
             if (ctx.side == Side.CLIENT)
             {
-                Minecraft mc = Minecraft.getMinecraft();
-                mc.addScheduledTask(ClientProxy::showTradeGUI);
+                Minecraft.getMinecraft().addScheduledTask(ClientProxy::showTradeGUI);
             }
 
             return null;
@@ -286,23 +253,28 @@ public class Network
     }
 
 
-    public static class InteractPacket implements IMessage
+    public static class BlockInteractionPacket implements IMessage
     {
         BlockPos pos;
         EnumFacing facing;
         Vec3d hitVec;
         EnumHand hand;
 
-        public InteractPacket() //Required; probably for when the packet is received
+        public BlockInteractionPacket() //Required; probably for when the packet is received
         {
         }
 
-        public InteractPacket(BlockPos pos)
+        public BlockInteractionPacket(BlockPos pos)
         {
             this(pos, EnumFacing.UP, new Vec3d(pos), EnumHand.MAIN_HAND);
         }
 
-        public InteractPacket(BlockPos pos, EnumFacing facing, Vec3d hitVec, EnumHand hand)
+        public BlockInteractionPacket(PlayerInteractEvent.RightClickBlock event)
+        {
+            this(event.getPos(), event.getFace(), event.getHitVec(), event.getHand());
+        }
+
+        public BlockInteractionPacket(BlockPos pos, EnumFacing facing, Vec3d hitVec, EnumHand hand)
         {
             this.pos = pos;
             this.facing = facing;
@@ -337,10 +309,10 @@ public class Network
         }
     }
 
-    public static class InteractPacketHandler implements IMessageHandler<InteractPacket, IMessage>
+    public static class BlockInteractionPacketHandler implements IMessageHandler<BlockInteractionPacket, IMessage>
     {
         @Override
-        public IMessage onMessage(InteractPacket packet, MessageContext ctx)
+        public IMessage onMessage(BlockInteractionPacket packet, MessageContext ctx)
         {
             if (ctx.side == Side.CLIENT)
             {
@@ -351,6 +323,175 @@ public class Network
                 });
             }
 
+            return null;
+        }
+    }
+
+
+    public static class InteractionMenuPacket implements IMessage
+    {
+        String title;
+        ArrayList<String> options;
+        Vec3d hitVec;
+        BlockPos blockPos = null;
+        int entityID;
+
+        public InteractionMenuPacket() //Required; probably for when the packet is received
+        {
+        }
+
+        public InteractionMenuPacket(String title, ArrayList<String> options, Vec3d hitVec, Entity entity)
+        {
+            this.title = title;
+            this.options = options;
+            this.hitVec = hitVec;
+            entityID = entity.getEntityId();
+        }
+
+        public InteractionMenuPacket(String title, ArrayList<String> options, Vec3d hitVec, BlockPos blockPos)
+        {
+            this.title = title;
+            this.options = options;
+            this.hitVec = hitVec;
+            this.blockPos = blockPos;
+        }
+
+
+        @Override
+        public void toBytes(ByteBuf buf)
+        {
+            ByteBufUtils.writeUTF8String(buf, title);
+            buf.writeInt(options.size());
+            for (String option : options) ByteBufUtils.writeUTF8String(buf, option);
+
+            buf.writeDouble(hitVec.x);
+            buf.writeDouble(hitVec.y);
+            buf.writeDouble(hitVec.z);
+
+            buf.writeBoolean(blockPos != null);
+            if (blockPos != null)
+            {
+                buf.writeInt(blockPos.getX());
+                buf.writeInt(blockPos.getY());
+                buf.writeInt(blockPos.getZ());
+            }
+            else buf.writeInt(entityID);
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf)
+        {
+            title = ByteBufUtils.readUTF8String(buf);
+            options = new ArrayList<>();
+            for (int i = buf.readInt(); i > 0; i--) options.add(ByteBufUtils.readUTF8String(buf));
+
+            hitVec = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
+
+            if (buf.readBoolean()) blockPos = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
+            else entityID = buf.readInt();
+        }
+    }
+
+    public static class InteractionMenuPacketHandler implements IMessageHandler<InteractionMenuPacket, IMessage>
+    {
+        @Override
+        public IMessage onMessage(InteractionMenuPacket packet, MessageContext ctx)
+        {
+            if (ctx.side == Side.CLIENT)
+            {
+                Minecraft.getMinecraft().addScheduledTask(() ->
+                {
+                    if (packet.blockPos != null) new InteractionGUI(I18n.translateToLocal(packet.title), packet.options, packet.hitVec, packet.blockPos);
+                    else new InteractionGUI(packet.title, packet.options, packet.hitVec, packet.entityID);
+                });
+            }
+
+            return null;
+        }
+    }
+
+
+    public static class RequestInteractionPacket implements IMessage
+    {
+        public String interaction;
+        public Vec3d hitVec;
+        public BlockPos blockPos = null;
+        public int entityID;
+
+        public RequestInteractionPacket()
+        {
+            //Required
+        }
+
+        public RequestInteractionPacket(String interaction, Vec3d hitVec, BlockPos blockPos)
+        {
+            this.interaction = interaction;
+            this.hitVec = hitVec;
+            this.blockPos = blockPos;
+        }
+
+        public RequestInteractionPacket(String interaction, Vec3d hitVec, int entityID)
+        {
+            this.interaction = interaction;
+            this.hitVec = hitVec;
+            this.entityID = entityID;
+        }
+
+        @Override
+        public void toBytes(ByteBuf buf)
+        {
+            ByteBufUtils.writeUTF8String(buf, interaction);
+
+            buf.writeDouble(hitVec.x);
+            buf.writeDouble(hitVec.y);
+            buf.writeDouble(hitVec.z);
+
+            buf.writeBoolean(blockPos != null);
+            if (blockPos != null)
+            {
+                buf.writeInt(blockPos.getX());
+                buf.writeInt(blockPos.getY());
+                buf.writeInt(blockPos.getZ());
+            }
+            else buf.writeInt(entityID);
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf)
+        {
+            interaction = ByteBufUtils.readUTF8String(buf);
+
+            hitVec = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
+
+            if (buf.readBoolean()) blockPos = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
+            else entityID = buf.readInt();
+        }
+    }
+
+    public static class RequestInteractionPacketHandler implements IMessageHandler<RequestInteractionPacket, IMessage>
+    {
+        @Override
+        public IMessage onMessage(RequestInteractionPacket packet, MessageContext ctx)
+        {
+            FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() ->
+            {
+                EntityPlayerMP player = ctx.getServerHandler().player;
+                if (packet.blockPos != null)
+                {
+                    if (!AInteraction.tryInteraction(player, packet.interaction, packet.hitVec, packet.blockPos))
+                    {
+                        AInteraction.tryShowInteractionMenu(player, packet.hitVec, packet.blockPos);
+                    }
+                }
+                else
+                {
+                    Entity entity = player.world.getEntityByID(packet.entityID);
+                    if (!AInteraction.tryInteraction(player, packet.interaction, packet.hitVec, entity))
+                    {
+                        AInteraction.tryShowInteractionMenu(player, packet.hitVec, entity);
+                    }
+                }
+            });
             return null;
         }
     }

@@ -1,6 +1,7 @@
 package com.fantasticsource.tiamatinteractions;
 
-import com.fantasticsource.tiamatinteractions.interaction.InteractionGUI;
+import com.fantasticsource.tiamatinteractions.interaction.AInteraction;
+import com.fantasticsource.tiamatinteractions.interaction.trading.InteractionTrade;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -32,6 +33,8 @@ public class TiamatInteractions
     {
         MinecraftForge.EVENT_BUS.register(TiamatInteractions.class);
         Network.init();
+
+        new InteractionTrade();
     }
 
     @SubscribeEvent
@@ -72,14 +75,16 @@ public class TiamatInteractions
     @SubscribeEvent
     public static void entityInteract(PlayerInteractEvent.EntityInteractSpecific event)
     {
-        if (event.getSide() != Side.CLIENT || event.getHand() != EnumHand.MAIN_HAND || event.getEntityPlayer().dimension != 0) return;
+        if (event.getSide() != Side.SERVER || event.getHand() != EnumHand.MAIN_HAND) return;
 
-        new InteractionGUI(event.getTarget());
+        AInteraction.tryShowInteractionMenu((EntityPlayerMP) event.getEntityPlayer(), event.getLocalPos(), event.getTarget());
     }
 
     @SubscribeEvent
     public static void blockInteract(PlayerInteractEvent.RightClickBlock event)
     {
+        if (event.getSide() != Side.SERVER || event.getHand() != EnumHand.MAIN_HAND) return;
 
+        AInteraction.tryShowInteractionMenu((EntityPlayerMP) event.getEntityPlayer(), event.getHitVec(), event.getPos());
     }
 }

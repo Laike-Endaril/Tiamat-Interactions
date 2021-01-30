@@ -62,7 +62,7 @@ public class CmdInteract extends CommandBase
             return;
         }
 
-        Network.WRAPPER.sendTo(new Network.InteractPacket(blockPos), player);
+        Network.WRAPPER.sendTo(new Network.BlockInteractionPacket(blockPos), player);
     }
 
     @Override
