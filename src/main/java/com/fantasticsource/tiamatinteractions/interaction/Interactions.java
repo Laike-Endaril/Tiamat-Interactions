@@ -1,29 +1,19 @@
 package com.fantasticsource.tiamatinteractions.interaction;
 
 import com.fantasticsource.tiamatinteractions.Network;
+import com.fantasticsource.tiamatinteractions.api.AInteraction;
+import com.fantasticsource.tools.ReflectionTool;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.TextFormatting;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public abstract class AInteraction
+public class Interactions
 {
-    public static final HashMap<String, AInteraction> INTERACTIONS = new HashMap<>();
-
-    public final String name;
-
-    public AInteraction(String name)
-    {
-        if (INTERACTIONS.containsKey(name)) System.out.println(TextFormatting.YELLOW + "MULTIPLE INTERACTIONS WITH NAME: " + name);
-
-        this.name = name;
-        INTERACTIONS.put(name, this);
-    }
-
+    private static final HashMap<String, AInteraction> INTERACTIONS = (HashMap<String, AInteraction>) ReflectionTool.get(AInteraction.class, "INTERACTIONS", null);
 
     public static void tryShowInteractionMenu(EntityPlayerMP player, Vec3d hitVec, Entity target)
     {
@@ -59,19 +49,4 @@ public abstract class AInteraction
         if (interaction == null || !interaction.available(player, hitVec, blockPos)) return false;
         return interaction.execute(player, hitVec, blockPos);
     }
-
-
-    public abstract boolean available(EntityPlayerMP player, Vec3d hitVec, Entity target);
-
-    public abstract boolean available(EntityPlayerMP player, Vec3d hitVec, BlockPos blockPos);
-
-    /**
-     * @return Whether we're done (true) or should return to the interaction menu (false)
-     */
-    public abstract boolean execute(EntityPlayerMP player, Vec3d hitVec, Entity target);
-
-    /**
-     * @return Whether we're done (true) or should return to the interaction menu (false)
-     */
-    public abstract boolean execute(EntityPlayerMP player, Vec3d hitVec, BlockPos blockPos);
 }

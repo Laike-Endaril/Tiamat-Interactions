@@ -1,6 +1,6 @@
 package com.fantasticsource.tiamatinteractions.interaction.trading;
 
-import com.fantasticsource.tiamatinteractions.interaction.AInteraction;
+import com.fantasticsource.tiamatinteractions.api.AInteraction;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.math.BlockPos;

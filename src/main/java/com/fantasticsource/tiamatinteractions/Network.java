@@ -1,7 +1,7 @@
 package com.fantasticsource.tiamatinteractions;
 
-import com.fantasticsource.tiamatinteractions.interaction.AInteraction;
 import com.fantasticsource.tiamatinteractions.interaction.InteractionGUI;
+import com.fantasticsource.tiamatinteractions.interaction.Interactions;
 import com.fantasticsource.tiamatinteractions.interaction.trading.TradeGUI;
 import com.fantasticsource.tiamatinteractions.interaction.trading.Trading;
 import io.netty.buffer.ByteBuf;
@@ -478,17 +478,17 @@ public class Network
                 EntityPlayerMP player = ctx.getServerHandler().player;
                 if (packet.blockPos != null)
                 {
-                    if (!AInteraction.tryInteraction(player, packet.interaction, packet.hitVec, packet.blockPos))
+                    if (!Interactions.tryInteraction(player, packet.interaction, packet.hitVec, packet.blockPos))
                     {
-                        AInteraction.tryShowInteractionMenu(player, packet.hitVec, packet.blockPos);
+                        Interactions.tryShowInteractionMenu(player, packet.hitVec, packet.blockPos);
                     }
                 }
                 else
                 {
                     Entity entity = player.world.getEntityByID(packet.entityID);
-                    if (!AInteraction.tryInteraction(player, packet.interaction, packet.hitVec, entity))
+                    if (!Interactions.tryInteraction(player, packet.interaction, packet.hitVec, entity))
                     {
-                        AInteraction.tryShowInteractionMenu(player, packet.hitVec, entity);
+                        Interactions.tryShowInteractionMenu(player, packet.hitVec, entity);
                     }
                 }
             });
