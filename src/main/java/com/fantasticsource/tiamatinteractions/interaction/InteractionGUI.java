@@ -4,7 +4,6 @@ import com.fantasticsource.mctools.gui.GUIScreen;
 import com.fantasticsource.mctools.gui.element.GUIElement;
 import com.fantasticsource.mctools.gui.element.other.GUIButton;
 import com.fantasticsource.mctools.gui.element.text.GUIText;
-import com.fantasticsource.mctools.gui.element.textured.GUIImage;
 import com.fantasticsource.mctools.gui.element.textured.GUIStretchedImage;
 import com.fantasticsource.mctools.gui.element.view.GUIAutocroppedView;
 import com.fantasticsource.tiamatinteractions.Network;
@@ -78,16 +77,14 @@ public class InteractionGUI extends GUIScreen
         recalc();
     }
 
-    protected GUIImage makeLabel(String text)
+    protected GUIElement makeLabel(String text)
     {
-        GUIImage label = new GUIImage(this, 256 * internalScaling, 32 * internalScaling, TEX_LABEL);
-        label.setSubElementAutoplaceMethod(GUIElement.AP_CENTER);
+        GUIElement label = new GUIAutocroppedView(this, 0.4, new GUIStretchedImage(this, TEX_LABEL));
         label.add(new GUIText(this, text, Color.WHITE));
-
         return label;
     }
 
-    protected GUIButton makeButton(String text)
+    protected GUIElement makeButton(String text)
     {
         GUIElement active = new GUIAutocroppedView(this, 0.4, new GUIStretchedImage(this, TEX_BUTTON_ACTIVE));
         active.add(new GUIText(this, text, Color.WHITE));
