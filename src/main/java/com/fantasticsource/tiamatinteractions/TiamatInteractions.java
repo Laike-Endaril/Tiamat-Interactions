@@ -21,7 +21,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.relauncher.Side;
 
-@Mod(modid = TiamatInteractions.MODID, name = TiamatInteractions.NAME, version = TiamatInteractions.VERSION, dependencies = "required-after:fantasticlib@[1.12.2.044r,)")
+@Mod(modid = TiamatInteractions.MODID, name = TiamatInteractions.NAME, version = TiamatInteractions.VERSION, dependencies = "required-after:fantasticlib@[1.12.2.044zf,)")
 public class TiamatInteractions
 {
     public static final String MODID = "tiamatinteractions";

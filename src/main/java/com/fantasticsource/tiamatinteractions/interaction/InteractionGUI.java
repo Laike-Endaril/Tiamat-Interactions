@@ -5,6 +5,8 @@ import com.fantasticsource.mctools.gui.element.GUIElement;
 import com.fantasticsource.mctools.gui.element.other.GUIButton;
 import com.fantasticsource.mctools.gui.element.text.GUIText;
 import com.fantasticsource.mctools.gui.element.textured.GUIImage;
+import com.fantasticsource.mctools.gui.element.textured.GUIStretchedImage;
+import com.fantasticsource.mctools.gui.element.view.GUIAutocroppedView;
 import com.fantasticsource.tiamatinteractions.Network;
 import com.fantasticsource.tools.datastructures.Color;
 import net.minecraft.util.ResourceLocation;
@@ -87,16 +89,13 @@ public class InteractionGUI extends GUIScreen
 
     protected GUIButton makeButton(String text)
     {
-        GUIImage active = new GUIImage(this, 256 * internalScaling, 32 * internalScaling, TEX_BUTTON_ACTIVE);
-        active.setSubElementAutoplaceMethod(GUIElement.AP_CENTER);
+        GUIElement active = new GUIAutocroppedView(this, 0.4, new GUIStretchedImage(this, TEX_BUTTON_ACTIVE));
         active.add(new GUIText(this, text, Color.WHITE));
 
-        GUIImage hover = new GUIImage(this, 256 * internalScaling, 32 * internalScaling, TEX_BUTTON_HOVER);
-        hover.setSubElementAutoplaceMethod(GUIElement.AP_CENTER);
+        GUIElement hover = new GUIAutocroppedView(this, 0.4, new GUIStretchedImage(this, TEX_BUTTON_HOVER));
         hover.add(new GUIText(this, text, hoverButtonColor));
 
-        GUIImage idle = new GUIImage(this, 256 * internalScaling, 32 * internalScaling, TEX_BUTTON_IDLE);
-        idle.setSubElementAutoplaceMethod(GUIElement.AP_CENTER);
+        GUIElement idle = new GUIAutocroppedView(this, 0.4, new GUIStretchedImage(this, TEX_BUTTON_IDLE));
         idle.add(new GUIText(this, text, idleButtonColor));
 
         return new GUIButton(this, idle, hover, active);
