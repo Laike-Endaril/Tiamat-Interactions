@@ -26,7 +26,7 @@ public class TiamatInteractions
 {
     public static final String MODID = "tiamatinteractions";
     public static final String NAME = "Tiamat Interactions";
-    public static final String VERSION = "1.12.2.000b";
+    public static final String VERSION = "1.12.2.000c";
 
     @Mod.EventHandler
     public static void preInit(FMLPreInitializationEvent event)
