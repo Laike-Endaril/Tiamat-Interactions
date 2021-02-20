@@ -7,13 +7,14 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 /**
  * To add a custom interaction, just extend this class and edit the methods
  */
 public abstract class AInteraction
 {
-    private static final HashMap<String, AInteraction> INTERACTIONS = new HashMap<>();
+    private static final LinkedHashMap<String, AInteraction> INTERACTIONS = new LinkedHashMap<>();
 
 
     public final String name;
