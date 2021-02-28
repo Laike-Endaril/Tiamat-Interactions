@@ -14,15 +14,15 @@ public class InteractionTrade extends AInteraction
     }
 
     @Override
-    public boolean available(EntityPlayerMP player, Vec3d hitVec, Entity target)
+    public String titleIfAvailable(EntityPlayerMP player, Vec3d hitVec, Entity target)
     {
-        return target instanceof EntityPlayerMP;
+        return target instanceof EntityPlayerMP ? name : null;
     }
 
     @Override
-    public boolean available(EntityPlayerMP player, Vec3d hitVec, BlockPos blockPos)
+    public String titleIfAvailable(EntityPlayerMP player, Vec3d hitVec, BlockPos blockPos)
     {
-        return false;
+        return null;
     }
 
     @Override

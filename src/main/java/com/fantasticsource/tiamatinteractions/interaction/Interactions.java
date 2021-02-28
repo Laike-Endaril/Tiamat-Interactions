@@ -8,8 +8,8 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class Interactions
 {
@@ -17,20 +17,22 @@ public class Interactions
 
     public static void tryShowInteractionMenu(EntityPlayerMP player, Vec3d hitVec, Entity target)
     {
-        ArrayList<String> availableInteractions = new ArrayList<>();
+        LinkedHashMap<String, String> availableInteractions = new LinkedHashMap<>();
         for (AInteraction interaction : INTERACTIONS.values())
         {
-            if (interaction.available(player, hitVec, target)) availableInteractions.add(interaction.name);
+            String displayName = interaction.titleIfAvailable(player, hitVec, target);
+            if (displayName != null) availableInteractions.put(displayName, interaction.name);
         }
         if (availableInteractions.size() > 0) Network.WRAPPER.sendTo(new Network.InteractionMenuPacket(target.getName(), availableInteractions, hitVec, target), player);
     }
 
     public static void tryShowInteractionMenu(EntityPlayerMP player, Vec3d hitVec, BlockPos blockPos)
     {
-        ArrayList<String> availableInteractions = new ArrayList<>();
+        LinkedHashMap<String, String> availableInteractions = new LinkedHashMap<>();
         for (AInteraction interaction : INTERACTIONS.values())
         {
-            if (interaction.available(player, hitVec, blockPos)) availableInteractions.add(interaction.name);
+            String displayName = interaction.titleIfAvailable(player, hitVec, blockPos);
+            if (displayName != null) availableInteractions.put(displayName, interaction.name);
         }
         if (availableInteractions.size() > 0) Network.WRAPPER.sendTo(new Network.InteractionMenuPacket(player.world.getBlockState(blockPos).getBlock().getUnlocalizedName(), availableInteractions, hitVec, blockPos), player);
     }
@@ -39,14 +41,14 @@ public class Interactions
     public static boolean tryInteraction(EntityPlayerMP player, String interactionName, Vec3d hitVec, Entity target)
     {
         AInteraction interaction = INTERACTIONS.get(interactionName);
-        if (interaction == null || !interaction.available(player, hitVec, target)) return false;
+        if (interaction == null || interaction.titleIfAvailable(player, hitVec, target) == null) return false;
         return interaction.execute(player, hitVec, target);
     }
 
     public static boolean tryInteraction(EntityPlayerMP player, String interactionName, Vec3d hitVec, BlockPos blockPos)
     {
         AInteraction interaction = INTERACTIONS.get(interactionName);
-        if (interaction == null || !interaction.available(player, hitVec, blockPos)) return false;
+        if (interaction == null || interaction.titleIfAvailable(player, hitVec, blockPos) == null) return false;
         return interaction.execute(player, hitVec, blockPos);
     }
 }

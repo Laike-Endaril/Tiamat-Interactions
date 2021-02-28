@@ -11,8 +11,10 @@ import com.fantasticsource.tools.datastructures.Color;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.translation.I18n;
 
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static com.fantasticsource.tiamatinteractions.TiamatInteractions.MODID;
 
@@ -31,7 +33,7 @@ public class InteractionGUI extends GUIScreen
     protected double internalScaling;
     protected String title;
 
-    public InteractionGUI(String title, ArrayList<String> options, Vec3d hitVec, BlockPos blockPos)
+    public InteractionGUI(String title, LinkedHashMap<String, String> options, Vec3d hitVec, BlockPos blockPos)
     {
         super(0.5);
 
@@ -43,18 +45,18 @@ public class InteractionGUI extends GUIScreen
         root.setSubElementAutoplaceMethod(GUIElement.AP_CENTER);
 
         root.add(makeLabel(title));
-        for (String option : options)
+        for (Map.Entry<String, String> option : options.entrySet())
         {
-            root.add(makeButton(option).addClickActions(() ->
+            root.add(makeButton(I18n.translateToLocal(option.getKey())).addClickActions(() ->
             {
-                Network.WRAPPER.sendToServer(new Network.RequestInteractionPacket(option, hitVec, blockPos));
+                Network.WRAPPER.sendToServer(new Network.RequestInteractionPacket(option.getValue(), hitVec, blockPos));
                 close();
             }));
         }
         recalc();
     }
 
-    public InteractionGUI(String title, ArrayList<String> options, Vec3d hitVec, int entityID)
+    public InteractionGUI(String title, LinkedHashMap<String, String> options, Vec3d hitVec, int entityID)
     {
         super(0.5);
 
@@ -66,11 +68,11 @@ public class InteractionGUI extends GUIScreen
         root.setSubElementAutoplaceMethod(GUIElement.AP_CENTER);
 
         root.add(makeLabel(title));
-        for (String option : options)
+        for (Map.Entry<String, String> option : options.entrySet())
         {
-            root.add(makeButton(option).addClickActions(() ->
+            root.add(makeButton(I18n.translateToLocal(option.getKey())).addClickActions(() ->
             {
-                Network.WRAPPER.sendToServer(new Network.RequestInteractionPacket(option, hitVec, entityID));
+                Network.WRAPPER.sendToServer(new Network.RequestInteractionPacket(option.getValue(), hitVec, entityID));
                 close();
             }));
         }

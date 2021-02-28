@@ -26,6 +26,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static com.fantasticsource.tiamatinteractions.TiamatInteractions.MODID;
 
@@ -331,7 +332,7 @@ public class Network
     public static class InteractionMenuPacket implements IMessage
     {
         String title;
-        ArrayList<String> options;
+        LinkedHashMap<String, String> options;
         Vec3d hitVec;
         BlockPos blockPos = null;
         int entityID;
@@ -340,7 +341,7 @@ public class Network
         {
         }
 
-        public InteractionMenuPacket(String title, ArrayList<String> options, Vec3d hitVec, Entity entity)
+        public InteractionMenuPacket(String title, LinkedHashMap<String, String> options, Vec3d hitVec, Entity entity)
         {
             this.title = title;
             this.options = options;
@@ -348,7 +349,7 @@ public class Network
             entityID = entity.getEntityId();
         }
 
-        public InteractionMenuPacket(String title, ArrayList<String> options, Vec3d hitVec, BlockPos blockPos)
+        public InteractionMenuPacket(String title, LinkedHashMap<String, String> options, Vec3d hitVec, BlockPos blockPos)
         {
             this.title = title;
             this.options = options;
@@ -362,7 +363,11 @@ public class Network
         {
             ByteBufUtils.writeUTF8String(buf, title);
             buf.writeInt(options.size());
-            for (String option : options) ByteBufUtils.writeUTF8String(buf, option);
+            for (Map.Entry<String, String> entry : options.entrySet())
+            {
+                ByteBufUtils.writeUTF8String(buf, entry.getKey());
+                ByteBufUtils.writeUTF8String(buf, entry.getValue());
+            }
 
             buf.writeDouble(hitVec.x);
             buf.writeDouble(hitVec.y);
@@ -382,8 +387,8 @@ public class Network
         public void fromBytes(ByteBuf buf)
         {
             title = ByteBufUtils.readUTF8String(buf);
-            options = new ArrayList<>();
-            for (int i = buf.readInt(); i > 0; i--) options.add(ByteBufUtils.readUTF8String(buf));
+            options = new LinkedHashMap<>();
+            for (int i = buf.readInt(); i > 0; i--) options.put(ByteBufUtils.readUTF8String(buf), ByteBufUtils.readUTF8String(buf));
 
             hitVec = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
 
@@ -402,7 +407,7 @@ public class Network
                 Minecraft.getMinecraft().addScheduledTask(() ->
                 {
                     if (packet.blockPos != null) new InteractionGUI(I18n.translateToLocal(packet.title), packet.options, packet.hitVec, packet.blockPos);
-                    else new InteractionGUI(packet.title, packet.options, packet.hitVec, packet.entityID);
+                    else new InteractionGUI(I18n.translateToLocal(packet.title), packet.options, packet.hitVec, packet.entityID);
                 });
             }
 

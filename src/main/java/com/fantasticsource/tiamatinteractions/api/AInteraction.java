@@ -34,9 +34,15 @@ public abstract class AInteraction
     }
 
 
-    public abstract boolean available(EntityPlayerMP player, Vec3d hitVec, Entity target);
+    /**
+     * @return the name to display for the interaction, or null if it is not available
+     */
+    public abstract String titleIfAvailable(EntityPlayerMP player, Vec3d hitVec, Entity target);
 
-    public abstract boolean available(EntityPlayerMP player, Vec3d hitVec, BlockPos blockPos);
+    /**
+     * @return the name to display for the interaction, or null if it is not available
+     */
+    public abstract String titleIfAvailable(EntityPlayerMP player, Vec3d hitVec, BlockPos blockPos);
 
     /**
      * @return Whether we're done (true) or should return to the interaction menu (false)
